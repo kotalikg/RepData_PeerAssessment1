@@ -1,6 +1,8 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: html_document
+output: 
+  html_document:
+    keep_md: true
 ---
 
 ##Loading and preprocessing the data
@@ -119,3 +121,4 @@ xyplot(plotdata4$steps ~ plotdata4$interval | plotdata4$daycatfac,layout = c(1, 
 ```
 
 Based on the plot, it seems there is difference between weekdays and weekends. I mean at the weekends the given user is more active, while on weekdays his/her activity is focused on morning hours. 
+

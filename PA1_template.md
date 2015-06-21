@@ -187,3 +187,4 @@ xyplot(plotdata4$steps ~ plotdata4$interval | plotdata4$daycatfac,layout = c(1, 
 ![](PA1_template_files/figure-html/Weekday/Weekend plot-1.png) 
 
 Based on the plot, it seems there is difference between weekdays and weekends. I mean at the weekends the given user is more active, while on weekdays his/her activity is focused on morning hours. 
+
