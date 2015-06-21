@@ -1,0 +1,121 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: html_document
+---
+
+##Loading and preprocessing the data
+
+Loading from activity.csv + transform date to Date format:
+```{r, load data, echo=TRUE}
+activity <- read.csv("activity.csv", header=TRUE)
+activity$date <- as.Date(activity$date, "%Y-%m-%d")
+```
+
+##What is mean total number of steps taken per day?
+
+Calculate the total number of steps taken per day: 
+```{r, days, echo=TRUE}
+activitycomp <- subset(activity, complete.cases(activity) == TRUE)
+dailysteps <- as.numeric(tapply(activitycomp$steps, activitycomp$date, sum))
+```
+
+Histogram of the total number of steps taken each day:
+```{r, histogram, echo=TRUE, results="asis"}
+daylist <- unique(activitycomp$date)
+plotdata <- data.frame(daylist, dailysteps)
+hist(plotdata$dailysteps, col = "red", main = "Total number of steps taken per day", xlab = "Daily steps")
+```
+
+Mean/Median calculation:
+```{r, mean/median, echo=TRUE}
+mean(plotdata$dailysteps)
+median(plotdata$dailysteps)
+```
+
+##What is the average daily activity pattern?
+
+Average number of steps taken by 5-minute interval:
+```{r, avg activity, echo=TRUE}
+avgstepsbyint <- as.numeric(tapply(activitycomp$steps, activitycomp$interval, mean))
+intlist <- unique(activitycomp$interval)
+plotdata2 <- data.frame(intlist, avgstepsbyint)
+library(lattice)
+xyplot(plotdata2$avgstepsbyint ~ plotdata2$intlist, type = "l", xlab = "Interval", ylab = "Number of steps", main = "Average daily activity pattern")
+```
+
+Most active 5-minute interval based on avg. number of steps taken:
+```{r, most active, echo=TRUE}
+which.max(plotdata2$avgstepsbyint)
+plotdata2$intlist[which.max(plotdata2$avgstepsbyint)] 
+x <- which.max(plotdata2$avgstepsbyint)
+y <- plotdata2$intlist[which.max(plotdata2$avgstepsbyint)] 
+z <- round(max(plotdata2$avgstepsbyint))
+```
+
+It means, that the Nr. `r x` 5-minute interval is the most active, name of this interval: `r y` (HMM), avg. steps taken: `r z`. 
+
+##Imputing missing values
+
+Total number of rows with NA:
+```{r, NA, echo=TRUE}
+nrow(activity) - nrow(na.omit(activity))
+```
+
+Impute missing steps value with average:
+```{r, Imp Steps, echo=TRUE}
+stepsimp <- activity$steps
+z <- round(mean(stepsimp, na.rm=TRUE))
+stepsimp[ is.na(stepsimp) ] <- z
+```
+
+Create new dataset with imputed data:
+```{r, Imp Dataset, echo=TRUE}
+date <- activity$date
+interval <- activity$interval
+activityimp <- data.frame(stepsimp, date, interval)
+```
+
+New historgram, using imputed data:
+```{r, Imp histogram, echo=TRUE, results="asis"}
+dailysteps2 <- as.numeric(tapply(activityimp$steps, activityimp$date, sum))
+daylist2 <- unique(activityimp$date)
+plotdata3 <- data.frame(daylist2, dailysteps2)
+hist(plotdata3$dailysteps2, col = "grey", main = "Total number of steps taken per day (after imputation)", xlab = "Daily steps")
+```
+
+New Mean/Median calculation:
+```{r, Imp mean/median, echo=TRUE}
+mean(plotdata3$dailysteps2)
+median(plotdata3$dailysteps2)
+```
+
+What is the difference between original and new dataset (using histograms):
+```{r, Hist diff, echo=TRUE}
+par(mfrow=c(1,2))
+hist(plotdata$dailysteps, ylim = c(1,35), col = "red", main = "Original", xlab = "Daily steps")
+hist(plotdata3$dailysteps2, col = "grey", main = "New (after imputation)", xlab = "Daily steps")
+```
+
+The impact: frequency in category including mean value increased due to the selected imputing strategy. 
+
+##Are there differences in activity patterns between weekdays and weekends?
+
+Create new factor variable with "weekday"/"weekend" levels in the dataset:
+```{r, Weekday/Weekend, echo=TRUE}
+Sys.setlocale("LC_ALL", "C") #To be sure, that the weekday will be the expected
+daycateg <- weekdays(activityimp$date)
+daycateg[ daycateg == "Sunday" | daycateg == "Saturday" ] <- "weekend"
+daycateg[ daycateg != "weekend" ] <- "weekday"
+daycatfac <- as.factor(daycateg)
+activityimp2 <- cbind(activityimp, daycatfac)
+```
+
+Panel plot with avg. steps by 5-minute interval for weekdays/weekends:
+```{r, Weekday/Weekend plot, echo=TRUE, results="asis"}
+plotdata4 <- as.data.frame(aggregate(activityimp2$steps ~ activityimp2$interval + activityimp2$daycatfac, activityimp2, mean))
+names(plotdata4) <- c("interval", "daycatfac", "steps")
+library(lattice)
+xyplot(plotdata4$steps ~ plotdata4$interval | plotdata4$daycatfac,layout = c(1, 2), type = "l", xlab = "Interval", ylab = "Number of steps") 
+```
+
+Based on the plot, it seems there is difference between weekdays and weekends. I mean at the weekends the given user is more active, while on weekdays his/her activity is focused on morning hours. 
